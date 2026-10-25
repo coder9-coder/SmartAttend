@@ -1,0 +1,323 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Attendance Reports | SmartAttend</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 28px;
+            background: #f8f6ff;
+            color: #30264a;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #7955c8;
+        }
+
+        .panel {
+            background: white;
+            padding: 22px;
+            border-radius: 18px;
+            margin: 20px 0;
+            border: 1px solid #eee7fa;
+            box-shadow: 0 5px 20px rgba(90, 60, 130, 0.04);
+        }
+
+        form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 7px;
+            font-weight: 600;
+        }
+
+        select {
+            padding: 11px;
+            border: 1px solid #ded6ed;
+            border-radius: 9px;
+            min-width: 170px;
+            background: white;
+            color: #30264a;
+        }
+
+        button, .button {
+            display: inline-block;
+            border: 0;
+            border-radius: 9px;
+            background: #7955c8;
+            color: white;
+            padding: 12px 16px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover, .button:hover {
+            background: #6341ad;
+        }
+
+        .secondary {
+            background: #eee7fa;
+            color: #6341ad;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .card {
+            background: #f1ebff;
+            padding: 17px;
+            border-radius: 12px;
+        }
+
+        .card span {
+            display: block;
+            color: #78698f;
+            font-size: 13px;
+        }
+
+        .card strong {
+            display: block;
+            font-size: 25px;
+            margin-top: 8px;
+        }
+
+        .scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #eee9f7;
+        }
+
+        th {
+            color: #827791;
+            font-size: 13px;
+            background: #faf8ff;
+        }
+
+        .muted {
+            color: #8b819e;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .present {
+            background: #e2f8e9;
+            color: #217943;
+        }
+
+        .absent {
+            background: #ffe6e8;
+            color: #b42335;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 25px;
+            color: #8b819e;
+        }
+
+        @media (max-width: 650px) {
+            body {
+                padding: 14px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .panel {
+                padding: 15px;
+            }
+
+            select {
+                width: 100%;
+            }
+
+            form > div {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<main>
+
+    <h1>✿ SmartAttend Reports</h1>
+    <p class="muted">View and filter student attendance records.</p>
+
+    <a class="button secondary" href="/">← Back to Dashboard</a>
+
+    <section class="panel">
+        <h2>🔎 Filter Attendance</h2>
+
+        <form method="GET" action="{{ url_for('reports') }}">
+
+            <div>
+                <label for="student_id">Student Name</label>
+                <select id="student_id" name="student_id">
+                    <option value="">All Students</option>
+
+                    {% for student in students %}
+                    <option value="{{ student.id }}"
+                        {% if selected_student == student.id %}selected{% endif %}>
+                        {{ student.name }} — {{ student.roll_no }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="year">Year</label>
+                <select id="year" name="year">
+                    <option value="">All Years</option>
+
+                    {% for item in years %}
+                    <option value="{{ item.year }}"
+                        {% if selected_year|string == item.year|string %}selected{% endif %}>
+                        {{ item.year }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="month">Month</label>
+                <select id="month" name="month">
+                    <option value="">All Months</option>
+
+                    {% for m in range(1, 13) %}
+                    <option value="{{ '%02d'|format(m) }}"
+                        {% if selected_month|string == ('%02d'|format(m)) or selected_month|string == m|string %}selected{% endif %}>
+                        {{ ["", "January", "February", "March", "April",
+                        "May", "June", "July", "August", "September",
+                        "October", "November", "December"][m] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit">View Report</button>
+
+            <a class="button secondary"
+               href="{{ url_for('reports') }}">Reset Filters</a>
+
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>📊 Attendance Summary</h2>
+
+        <div class="cards">
+            <div class="card">
+                <span>Total Classes Marked</span>
+                <strong>{{ totals.total or 0 }}</strong>
+            </div>
+
+            <div class="card">
+                <span>Present Records</span>
+                <strong>{{ totals.present or 0 }}</strong>
+            </div>
+
+            <div class="card">
+                <span>Absent Records</span>
+                <strong>{{ totals.absent or 0 }}</strong>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>📋 Attendance History</h2>
+
+        <p class="muted">
+            Records matching your selected filters.
+        </p>
+
+        <div class="scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Roll Number</th>
+                        <th>Course</th>
+                        <th>Subject</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in records %}
+                    <tr>
+                        <td>{{ row.name }}</td>
+                        <td>{{ row.roll_no }}</td>
+                        <td>{{ row.course }}</td>
+                        <td>{{ row.subject }}</td>
+                        <td>{{ row.attendance_date }}</td>
+                        <td>
+                            {% if row.status == 'Present' %}
+                                <span class="status present">Present</span>
+                            {% else %}
+                                <span class="status absent">Absent</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty">
+                            No attendance records found for these filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <p class="muted" style="text-align:center;">
+        SmartAttend · Online Attendance Management System
+    </p>
+
+</main>
+</body>
+</html>
+```
